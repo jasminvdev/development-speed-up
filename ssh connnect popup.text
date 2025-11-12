@@ -1,0 +1,158 @@
+---------------------------------infomation-----------------------------------------
+sudo apt-get install libnotify-bin
+
+sudo nano /usr/local/bin/ssh-alert.sh
+
+	#!/bin/bash
+
+	tail -fn0 /var/log/auth.log | \
+	while read line ; do
+	    echo "$line" | grep "Accepted"
+	    if [ $? = 0 ]
+	    then
+	        # Extract the username and IP address from the log line
+	        USER=$(echo "$line" | awk '{print $9}')
+	        IP=$(echo "$line" | awk '{print $11}')
+
+	        # Display an alert box
+	        notify-send "SSH Login Alert" "User $USER has logged in from $IP"
+	    fi
+	done
+
+
+sudo chmod +x /usr/local/bin/ssh-alert.sh
+
+
+sudo nano /etc/systemd/system/ssh-alert.service
+
+	[Unit]
+	Description=SSH Login Alert
+
+	[Service]
+	ExecStart=/usr/local/bin/ssh-alert.sh
+	Restart=always
+	User=your-username
+
+	[Install]
+	WantedBy=default.target
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable ssh-alert.service
+sudo systemctl start ssh-alert.service
+
+
+
+---------------------------------question popup only ssh-----------------------------------------
+sudo apt install zenity
+sudo nano /usr/local/bin/ssh-alert.sh
+
+	#!/bin/bash
+
+	# Get the username and IP address of the connecting user
+	USERNAME=$1
+	IP_ADDRESS=$(echo $2 | awk '{print $1}')  # Extract the IP address
+
+	# Show a dialog asking if you want to allow the connection
+	if zenity --question --text="User '$USERNAME' from IP '$IP_ADDRESS' is trying to connect. Do you want to allow the connection?"; then
+	    # User clicked 'Yes', allow the connection by executing the user's intended command
+	    #shift 2  # Remove the first two parameters (username and IP)
+	    exec /bin/bash  # Start a new shell to allow the user to access the shell
+	else
+	    # User clicked 'No', deny the connection
+	    zenity --info --text="Connection denied for user '$USERNAME' from IP '$IP_ADDRESS'."
+	    exit 1  # Exit with a status indicating failure
+	fi
+
+sudo systemctl restart ssh
+
+sudo nano /etc/ssh/sshd_config
+	ForceCommand /usr/local/bin/ssh-alert.sh $USER $(echo $SSH_CONNECTION | awk '{print $1}') #add line below code
+
+sudo systemctl restart sshd
+sudo systemctl restart ssh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---for help---
+
+zenity --question --title="SSH Login Alert" --text="User hello from nii wants to connect. Allow?" --ok-label="Yes" --cancel-label="No"
+echo yad --title="SSH Login Alert" --text="User USER from IP wants to connect. Allow?" --button=Yes:0 --button=No:1
+
+
+RESPONSE=$(yad --title="SSH Login Alert" --text="User USER from IP wants to connect. Allow?" --button=Yes:0 --button=No:1; echo $?)
+echo $RESPONSE
+
+
+zenity --question --title="SSH Login Alert" --text="Are you sure you wish to proceed?"
+
+
+
+
+
+#!/bin/bash
+echo "hello"
+export DISPLAY=:0  # Ensure the display variable is set
+# Monitor the auth.log for new SSH connections
+tail -fn0 /var/log/auth.log | \
+while read line ; do
+    echo "$line" | grep "Accepted"
+    if [ $? = 0 ]
+    then
+        # Extract the username and IP address from the log line
+        USER=$(echo "$line" | awk '{print $9}')
+        IP=$(echo "$line" | awk '{print $11}')
+
+        # Display an alert box with Yes/No options
+        RESPONSE=$(zenity --question --title="SSH Login Alert" --text="User $USER from $IP wants to connect. Allow?" --ok-label="Yes" --cancel-label="No"; echo $?)
+        if [ $RESPONSE -eq 1 ]; then
+            # If "No" is selected, disconnect the SSH session
+            SESSION_PID=$(pgrep -u "$USER" -x sshd | tail -n 1)
+
+            if [ ! -z "$SESSION_PID" ]; then
+                sudo kill -9 "$SESSION_PID"
+                notify-send "SSH Session" "Disconnected SSH session for user $USER from $IP"
+            else
+                notify-send "SSH Session" "Could not find SSH session for user $USER from $IP"
+            fi
+        elif [ $RESPONSE -eq 0 ]; then
+            notify-send "SSH Session" "Allowed SSH session for user $USER from $IP"
+        else
+            notify-send "$RESPONSE"
+        fi
+    fi
+done
+
+
+
+
+
+
+
+#!/bin/bash
+
+# Get the username and IP address of the connecting user
+USERNAME=$1
+IP_ADDRESS=$(echo $2 | awk '{print $1}')  # Extract the IP address
+
+# Show a dialog asking if you want to allow the connection
+if zenity --question --text="User '$USERNAME' from IP '$IP_ADDRESS' is trying to connect. Do you want to allow the connection?"; then
+    # User clicked 'Yes', allow the connection by executing the user's intended command
+    shift 2  # Remove the first two parameters (username and IP)
+    exec /bin/bash  # Start a new shell to allow the user to access the shell
+else
+    # User clicked 'No', deny the connection
+    zenity --info --text="Connection denied for user '$USERNAME' from IP '$IP_ADDRESS'."
+    exit 1  # Exit with a status indicating failure
+fi
