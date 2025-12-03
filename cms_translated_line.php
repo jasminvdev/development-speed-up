@@ -1,9 +1,9 @@
 working
     <?php
 $host = 'localhost';
-$dbname = 'test';
-$user = 'root';
-$pass = '123';
+$dbname = 'databasename';
+$user = 'username';
+$pass = 'password';
 $doCmsPage = true;
 $doCmsBlock = true;
 $cms_page = 'cms_page_test';
