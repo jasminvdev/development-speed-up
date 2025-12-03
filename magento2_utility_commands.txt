@@ -28,7 +28,7 @@ php bin/magento maintenance:disable
 php bin/magento maintenance:status
 
 👉 Admin User Create Command
-php bin/magento admin:user:create --admin-user=jasmin --admin-password=jasmin321 --admin-email=jasminvaghela14@gmail.com --admin-firstname=Jasmin --admin-lastname=Vaghela
+php bin/magento admin:user:create --admin-user=5msuser --admin-password=5ms4321 --admin-email=kapil@5ms.co.uk --admin-firstname=kapil --admin-lastname=5ms
 
 👉 Combined Command
 php bin/magento maintenance:enable && php bin/magento setup:upgrade && php bin/magento setup:di:compile && php bin/magento setup:static-content:deploy -f && php bin/magento maintenance:disable
@@ -53,6 +53,11 @@ zcat <file_name>.sql.gz | sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' | sudo mysql -u
 --------------------------------------------------------------
 scp html-backup-2025-11-10.tar.gz root@77.68.94.54:/var/www/vhosts/5msdevops.co.uk/elegant-villani.77-68-94-54.plesk.page
 Example: scp -P 22 html-backup-2025-06-06.tar.gz root@69.62.***.**:/home/user/
+
+---------------------------------------------------------------------------
+# change php version 
+sudo update-alternatives --config php
+
 
 💻 Live to Local Setup Steps
 --------------------------------------------------------------

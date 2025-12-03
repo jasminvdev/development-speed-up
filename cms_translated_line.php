@@ -1,12 +1,13 @@
+working
     <?php
 $host = 'localhost';
-$dbname = 'magento';
-$user = 'invigorate';
-$pass = 'Invi@123';
+$dbname = 'test';
+$user = 'root';
+$pass = '123';
 $doCmsPage = true;
 $doCmsBlock = true;
-$cms_page = 'cms_page';
-$cms_block = 'cms_block';
+$cms_page = 'cms_page_test';
+$cms_block = 'cms_block_test';
 
 function pr($object = "Comes here", $exit = 1) {
     echo "<pre>";
@@ -87,12 +88,38 @@ function processHtmlContent($html) {
     return $dom->saveHTML();
 }
 if($doCmsPage){    
-    $sql = "SELECT page_id, content FROM $cms_page WHERE page_id = 1";
+    $sql = "SELECT page_id, content FROM $cms_page";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $pageId = $row['page_id'];
+
+            $storeSql = "SELECT store_id FROM cms_page_store WHERE page_id = $pageId";
+            $storeRes = $conn->query($storeSql);
+            $storeIds = [];
+            while ($s = $storeRes->fetch_assoc()) {
+                $storeIds[] = (int)$s['store_id'];
+            }
+
+            if (in_array(0, $storeIds)) {
+                $shouldProcess = true;
+            } elseif (count($storeIds) == 4) {
+                $shouldProcess = true;
+            } else {
+                $shouldProcess = false;
+            }
+            
+
+            if(!$shouldProcess){
+                echo "Skipping page_id $pageId (store mismatch)\n";
+                continue;
+            }
+
+            if($row['content'] ==''){
+                echo "Skipping empty2 content for page_id: $pageId\n";
+                continue;
+            }
             $divAttributes = '';
             $removeDiv = extractDivContentDynamic($row['content'], $divAttributes);
             $content = htmlspecialchars_decode($removeDiv); 
@@ -111,12 +138,12 @@ if($doCmsPage){
             $updatedContent = processHtmlContent($content);
 
             if (empty(trim($content))) {
-                echo "Skipping empty content for block_id: $pageId\n";
+                echo "Skipping empty content for page_id: $pageId\n";
                 continue;
             }
 
             if ($updatedContent === $content) {
-                echo "No changes for block_id: $pageId\n";
+                echo "No changes for page_id: $pageId\n";
                 continue;
             }
                 
@@ -124,7 +151,6 @@ if($doCmsPage){
                 $updatedContent = str_replace($placeholder, $original, $updatedContent);
             }
 
-            // pr($updatedContent,0);
             $pattern = '/<div([^>]*data-content-type="html"[^>]*)>(.*?)<\/div>/s';
 
             if (preg_match($pattern, $row['content'], $matches)) {
@@ -136,9 +162,9 @@ if($doCmsPage){
             $stmt->bind_param("si", $updatedContent, $pageId);
 
             if ($stmt->execute()) {
-                echo "Updated block_id: $pageId successfully\n";
+                echo "Updated page_id: $pageId successfully\n";
             } else {
-                echo "Error updating block_id: $pageId - " . $conn->error . "\n";
+                echo "Error updating page_id: $pageId - " . $conn->error . "\n";
             }
 
             $stmt->close();
@@ -148,7 +174,89 @@ if($doCmsPage){
     }
 }
 if($doCmsBlock){
+    $sql = "SELECT block_id, content FROM $cms_block";
+    $result = $conn->query($sql);
 
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $blockId = $row['block_id'];
+
+            $storeSql = "SELECT store_id FROM cms_block_store WHERE block_id = $blockId";
+            $storeRes = $conn->query($storeSql);
+            $storeIds = [];
+            while ($s = $storeRes->fetch_assoc()) {
+                $storeIds[] = (int)$s['store_id'];
+            }
+
+            if (in_array(0, $storeIds)) {
+                $shouldProcess = true;
+            } elseif (count($storeIds) == 4) {
+                $shouldProcess = true;
+            } else {
+                $shouldProcess = false;
+            }
+            
+
+            if(!$shouldProcess){
+                echo "Skipping blockId $blockId (store mismatch)\n";
+                continue;
+            }
+            if($row['content'] ==''){
+                echo "Skipping empty2 content for block_id: $blockId\n";
+                continue;
+            }
+            $divAttributes = '';
+            $removeDiv = extractDivContentDynamic($row['content'], $divAttributes);
+            $content = htmlspecialchars_decode($removeDiv); 
+            
+            preg_match_all('/{{[^{}]+}}/', $content, $matches);
+
+            $srcMap = [];
+            foreach ($matches[0] as $index => $match) {
+                // pr($match);
+                $placeholder = "SRC_PLACEHOLDER_CUSTOM_{$index}_TEST";
+                $srcMap[$placeholder] = $match; 
+                $content = str_replace($match, $placeholder, $content); 
+            }
+            
+
+            $updatedContent = processHtmlContent($content);
+
+            if (empty(trim($content))) {
+                echo "Skipping empty content for block_id: $blockId\n";
+                continue;
+            }
+
+            if ($updatedContent === $content) {
+                echo "No changes for block_id: $blockId\n";
+                continue;
+            }
+                
+            foreach ($srcMap as $placeholder => $original) {
+                $updatedContent = str_replace($placeholder, $original, $updatedContent);
+            }
+
+            $pattern = '/<div([^>]*data-content-type="html"[^>]*)>(.*?)<\/div>/s';
+
+            if (preg_match($pattern, $row['content'], $matches)) {
+                $updatedContent = addDivContentDynamic(htmlspecialchars($updatedContent,ENT_HTML5), $divAttributes);
+            }
+
+            // pr($updatedContent);
+            $stmt = $conn->prepare("UPDATE $cms_block SET content = ? WHERE block_id = ?");
+            $stmt->bind_param("si", $updatedContent, $blockId);
+
+            if ($stmt->execute()) {
+                echo "Updated block_id: $blockId successfully\n";
+            } else {
+                echo "Error updating block_id: $blockId - " . $conn->error . "\n";
+            }
+
+            $stmt->close();
+        }
+    } else {
+        echo "0 results";
+    }
 }
 
 $conn->close();
