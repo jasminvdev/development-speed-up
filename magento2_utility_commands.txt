@@ -37,6 +37,8 @@ php bin/magento maintenance:enable && php bin/magento setup:upgrade && php bin/m
 --------------------------------------------------------------
 php bin/magento config:show web/secure/base_url
 
+php bin/magento info:adminuri
+
 🗜️ Backup & Restore (Files)
 --------------------------------------------------------------
 tar --exclude='public_html/pub' -czf html-backup-$(date +%F).tar.gz public_html/

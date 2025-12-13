@@ -25,7 +25,6 @@ if ($conn->connect_error) {
 }
 function extractDivContentDynamic($html, &$divAttributes = '') {
     $pattern = '/<div([^>]*data-content-type="html"[^>]*)>(.*?)<\/div>/s';
-
     if (preg_match($pattern, $html, $matches)) {
         $divAttributes = trim($matches[1]); // Capture div attributes
         return $matches[2]; // Return inner HTML if div exists
@@ -37,6 +36,9 @@ function extractDivContentDynamic($html, &$divAttributes = '') {
 
 function addDivContentDynamic($innerHtml, $divAttributes) {
     return "<div $divAttributes>$innerHtml</div>";
+}
+function fixBrTags($html) {
+    return str_replace(['</br>', '<br/>', '<br />','<br>'], '<br/>', $html);
 }
 
 function wrapTextWithTrans($node) {
