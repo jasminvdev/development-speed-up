@@ -258,3 +258,22 @@ function invilog($var,$filename = "logFileName.log",$permission='a+'){
     fwrite($file,json_encode($var)."\n");
     fclose($file);
 }
+
+
+php -d memory_limit=-d bin/magento setup:upgrade
+php -d memory_limit=-d bin/magento setup:static-content:deploy en_GB en_US en_IE -f
+php -d memory_limit=-d bin/magento cache:clean
+php -d memory_limit=-d bin/magento cache:flush
+
+php bin/magento config:set dev/js/move_script_to_bottom 0
+php bin/magento config:set dev/js/minify_files 0
+php bin/magento config:set dev/js/merge_files 0
+
+#in pleck
+chown -R confident-swirles_pi31lk1t7jg:psacln .
+
+find . -type d -exec chmod 755 {} \;
+find . -type f -exec chmod 644 {} \;
+chmod -R 775 var pub/static pub/media generated
+chmod +x bin/magento
+
