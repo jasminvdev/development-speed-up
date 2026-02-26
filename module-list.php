@@ -13,6 +13,7 @@
  *   php list-modules.php --disabled         # Only disabled modules
  *   php list-modules.php --json             # Output as JSON
  *   php list-modules.php --html             # Output as HTML table
+ *   php list-modules.php --third-party      # Only third-party/custom modules
  */
 
 // Get Magento root directory
@@ -29,6 +30,7 @@ $options = [
     'disabled' => in_array('--disabled', $argv),
     'json' => in_array('--json', $argv),
     'html' => in_array('--html', $argv),
+    'third-party' => in_array('--third-party', $argv),
     'help' => in_array('--help', $argv) || in_array('-h', $argv)
 ];
 
@@ -42,6 +44,7 @@ if ($options['help']) {
     echo "  --disabled      List only disabled modules\n";
     echo "  --json          Output as JSON\n";
     echo "  --html          Output as HTML table\n";
+    echo "  --third-party   List only third-party/custom modules (non-magento vendor or app/code)\n";
     echo "  --help, -h      Show this help message\n\n";
     exit(0);
 }
@@ -138,23 +141,30 @@ function scanModules($basePath, $moduleConfig = []) {
         
         foreach ($moduleDirs as $modulePath) {
             $moduleName = basename($modulePath);
-            $fullModuleName = $vendorName . '_' . $moduleName;
+            
+            // Prefer the canonical module name from etc/module.xml (e.g. Magento_AdminAdobeIms)
+            // Fallback to Vendor_Module based on directory structure if XML is missing/invalid.
+            $moduleDetails = getModuleDetails($modulePath);
+            $canonicalName = !empty($moduleDetails['name'])
+                ? $moduleDetails['name']
+                : $vendorName . '_' . $moduleName;
             
             // Check if it's a module (has etc/module.xml)
             $moduleXmlPath = $modulePath . '/etc/module.xml';
             if (!file_exists($moduleXmlPath)) {
                 continue;
             }
-            
-            $moduleDetails = getModuleDetails($modulePath);
+
             $composerDetails = getComposerDetails($modulePath);
             
             $module = [
-                'name' => $fullModuleName,
+                // Display the canonical module name (matches app/etc/config.php keys)
+                'name' => $canonicalName,
                 'vendor' => $vendorName,
                 'module' => $moduleName,
                 'path' => $modulePath,
-                'enabled' => isset($moduleConfig[$fullModuleName]) ? (bool)$moduleConfig[$fullModuleName] : null,
+                // Status is determined by the module's canonical name in app/etc/config.php
+                'enabled' => isset($moduleConfig[$canonicalName]) ? (bool)$moduleConfig[$canonicalName] : null,
                 'setup_version' => $moduleDetails['setup_version'],
                 'composer_version' => $composerDetails['version'],
                 'description' => $composerDetails['description'],
@@ -162,7 +172,8 @@ function scanModules($basePath, $moduleConfig = []) {
                 'authors' => $composerDetails['authors']
             ];
             
-            $modules[$fullModuleName] = $module;
+            // Use the canonical module name as the array key as well
+            $modules[$canonicalName] = $module;
         }
     }
     
@@ -195,6 +206,19 @@ if ($options['enabled']) {
 if ($options['disabled']) {
     $allModules = array_filter($allModules, function($module) {
         return $module['enabled'] === false;
+    });
+}
+
+// Filter by third-party/custom modules
+// Definition:
+// - Any module located under app/code (custom/in-house)
+// - OR any vendor module whose vendor is not "magento"
+if ($options['third-party']) {
+    $allModules = array_filter($allModules, function($module) {
+        $isAppCode = strpos($module['path'], '/app/code/') !== false;
+        $isNonMagentoVendor = (strpos($module['path'], '/vendor/') !== false)
+            && (strtolower($module['vendor']) !== 'magento');
+        return $isAppCode || $isNonMagentoVendor;
     });
 }
 
