@@ -33,22 +33,42 @@ php bin/magento admin:user:create --admin-user=5msuser --admin-password=5ms4321 
 👉 Combined Command
 php bin/magento maintenance:enable && php bin/magento setup:upgrade && php bin/magento setup:di:compile && php bin/magento setup:static-content:deploy -f && php bin/magento maintenance:disable
 
+#With memory limit
+php -d memory_limit=-d bin/magento setup:upgrade
+php -d memory_limit=-d bin/magento setup:static-content:deploy en_GB en_US en_IE -f
+php -d memory_limit=-d bin/magento cache:clean
+php -d memory_limit=-d bin/magento cache:flush
+
+
+👉 JS CSS Marge Minify
+php bin/magento config:set dev/js/move_script_to_bottom 0
+php bin/magento config:set dev/js/merge_files 0
+php bin/magento config:set dev/js/minify_files 0
+php bin/magento config:set dev/js/enable_js_bundling 0
+
+php bin/magento config:set dev/css/merge_css_files 0
+php bin/magento config:set dev/css/minify_files 0
+
+
 🌐 Show Base URL
 --------------------------------------------------------------
 php bin/magento config:show web/secure/base_url
-
 php bin/magento info:adminuri
+
 
 🗜️ Backup & Restore (Files)
 --------------------------------------------------------------
+du -sh public_html/* --exclude=public_html/pub
+
 tar --exclude='public_html/pub' -czf html-backup-$(date +%F).tar.gz public_html/
 tar -zxvf html-backup-2025-06-06.tar.gz
+
 
 🗄️ Database Backup & Restore
 --------------------------------------------------------------
 mysqldump --opt --skip-lock-tables --routines --max_allowed_packet=2G -u <user_name> -p <database_name> | gzip > database-<project_name>-backup-$(date +%F).sql.gz
-gunzip < <file_name>.sql.gz | sudo mysql -u <user_name> -p <database_name>
-zcat <file_name>.sql.gz | sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' | sudo mysql -u <user_name> -p <database_name>
+gunzip < <file_name>.sql.gz | mysql -u <user_name> -p <database_name>
+zcat <file_name>.sql.gz | sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' | mysql -u <user_name> -p <database_name>
 
 
 🚀 File Upload to Server
@@ -125,6 +145,16 @@ chmod 777 ./app/etc
 chmod 644 ./app/etc/*.xml
 chmod u+x bin/magento
 
+#Permission issue in pleck server
+
+chown -R confident-swirles_pi31lk1t7jg:psacln .
+find . -type d -exec chmod 755 {} \;
+find . -type f -exec chmod 644 {} \;
+chmod -R 775 var pub/static pub/media generated
+chmod +x bin/magento
+
+
+
 
 sudo whoami
     root
@@ -169,6 +199,8 @@ mv app-vendor-backup.zip backup/
 php bin/magento maintenance:enable
 mysqldump -u <user_name> -p <database_name> > backup/database-backup-$(date +%F).sql
 composer require magento/product-community-edition 2.4.8-p1 --no-update
+which composer
+which php
 /opt/plesk/php/8.1/bin/php /usr/local/psa/var/modules/composer/composer.phar require magento/product-community-edition 2.4.6-p3 --no-update
 composer remove <module_name>
 composer require <module_name>
@@ -182,7 +214,9 @@ composer require hyva-themes/magento2-default-theme:1.3.19 -w
 
 
 
+
 ⚡ Speed up Development commands
+--------------------------------------------------------------
 
 function pr($object = "Comes here",$exit=1)
 {
@@ -248,7 +282,6 @@ function t($exit=1)
     echo "</pre>";
 }
 function invilog($var,$filename = "logFileName.log",$permission='a+'){
-    
     $filename = (empty($filename)) ? "logFileName.log": $filename;
     $permission=(empty($permission)) ? "a+": $permission;
     $om = \Magento\Framework\App\ObjectManager::getInstance();
@@ -260,20 +293,16 @@ function invilog($var,$filename = "logFileName.log",$permission='a+'){
 }
 
 
-php -d memory_limit=-d bin/magento setup:upgrade
-php -d memory_limit=-d bin/magento setup:static-content:deploy en_GB en_US en_IE -f
-php -d memory_limit=-d bin/magento cache:clean
-php -d memory_limit=-d bin/magento cache:flush
+Prompt:-
+    Act as a senior software developer.
 
-php bin/magento config:set dev/js/move_script_to_bottom 0
-php bin/magento config:set dev/js/minify_files 0
-php bin/magento config:set dev/js/merge_files 0
+    Task: [Explain what you want]
 
-#in pleck
-chown -R confident-swirles_pi31lk1t7jg:psacln .
+    Requirements:
+        - Use clean code
+        - Follow best practices
+        - Add comments
+        - Optimize performance
 
-find . -type d -exec chmod 755 {} \;
-find . -type f -exec chmod 644 {} \;
-chmod -R 775 var pub/static pub/media generated
-chmod +x bin/magento
-
+    Output:
+        Provide complete working code.
