@@ -22,13 +22,13 @@ php bin/magento deploy:mode:set production --skip-compilation
 
 🧩 Maintenance Mode
 --------------------------------------------------------------
-php bin/magento maintenance:enable --ip=103.240.208.93 --ip=103.250.188.115
+php bin/magento maintenance:enable --ip={IP} --ip={IP}
 php bin/magento maintenance:enable
 php bin/magento maintenance:disable
 php bin/magento maintenance:status
 
 👉 Admin User Create Command
-php bin/magento admin:user:create --admin-user=5msuser --admin-password=5ms4321 --admin-email=kapil@5ms.co.uk --admin-firstname=kapil --admin-lastname=5ms
+php bin/magento admin:user:create --admin-user=jasmin --admin-password=jasmin4321 --admin-email=jasminv.dev@gmail.com --admin-firstname=jasmin --admin-lastname=vaghela
 
 👉 Combined Command
 php bin/magento maintenance:enable && php bin/magento setup:upgrade && php bin/magento setup:di:compile && php bin/magento setup:static-content:deploy -f && php bin/magento maintenance:disable
@@ -73,8 +73,8 @@ zcat <file_name>.sql.gz | sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' | mysql -u <use
 
 🚀 File Upload to Server
 --------------------------------------------------------------
-scp html-backup-2025-11-10.tar.gz root@77.68.94.54:/var/www/vhosts/5msdevops.co.uk/elegant-villani.77-68-94-54.plesk.page
-Example: scp -P 22 html-backup-2025-06-06.tar.gz root@69.62.***.**:/home/user/
+scp html-backup-2025-11-10.tar.gz {user}@{HostName}:/var/www/vhosts/
+Example: scp -P 22 html-backup-2025-06-06.tar.gz {user}@{HostName}.***.**:/home/user/
 
 ---------------------------------------------------------------------------
 # change php version 
@@ -86,7 +86,6 @@ sudo update-alternatives --config php
 # On Live Server
 cd /var/www/magento_path
 mysqldump --opt --skip-lock-tables --routines --max_allowed_packet=2G -u new -p new | gzip > database-un-backup-$(date +%F).sql.gz
-J2m8NaNHZ4pmUzP
 tar --exclude='public_html/var/log' --ignore-failed-read -czf html-backup-$(date +%F).tar.gz public_html/
 tar --exclude='public_html/var/log' -czf html-backup-$(date +%F).tar.gz public_html/
 mv html-backup-*.tar.gz public_html/pub
@@ -159,15 +158,15 @@ chmod +x bin/magento
 sudo whoami
     root
 whoami
-    keyur
+    jasmin
 ps aux | grep nginx
     root        1320  0.0  0.0  84848  5564 ?        Ss   10:35   0:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
-    keyur       1321  0.0  0.0  85892 10044 ?        S    10:35   0:00 nginx: worker process
-    keyur       1322  0.0  0.0  85892 10172 ?        S    10:35   0:00 nginx: worker process
-    keyur       1323  0.0  0.0  85900 10072 ?        S    10:35   0:00 nginx: worker process
-    keyur       1324  0.0  0.0  85892 10044 ?        S    10:35   0:00 nginx: worker process
-    keyur      19918  0.0  0.0   9220  2432 pts/3    S+   11:36   0:00 grep --color=auto nginx
-sudo chown -R keyur:keyur .
+    jasmin       1321  0.0  0.0  85892 10044 ?        S    10:35   0:00 nginx: worker process
+    jasmin       1322  0.0  0.0  85892 10172 ?        S    10:35   0:00 nginx: worker process
+    jasmin       1323  0.0  0.0  85900 10072 ?        S    10:35   0:00 nginx: worker process
+    jasmin       1324  0.0  0.0  85892 10044 ?        S    10:35   0:00 nginx: worker process
+    jasmin      19918  0.0  0.0   9220  2432 pts/3    S+   11:36   0:00 grep --color=auto nginx
+sudo chown -R jasmin:jasmin .
 sudo find var generated pub/static pub/media app/etc -type f -exec chmod 664 {} \;
 sudo find var generated pub/static pub/media app/etc -type d -exec chmod 775 {} \;
 sudo chmod u+x bin/magento
@@ -306,3 +305,17 @@ Prompt:-
 
     Output:
         Provide complete working code.
+
+
+Git:-
+    git add .
+    git commit -m ''
+    git push
+
+    git pull --no-rebase
+    git pull --rebase
+    git stash
+
+    git reset --hard
+    git clean -fd
+    git pull origin main
